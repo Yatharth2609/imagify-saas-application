@@ -30,6 +30,7 @@ import { CustomField } from "./CustomField";
 import { useEffect, useState, useTransition } from "react";
 import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils";
 import { updateCredits } from "@/lib/actions/user.actions";
+import MediaUploader from "./MediaUploader";
 
 export const formSchema = z.object({
   title: z.string(),
@@ -82,11 +83,11 @@ const TransformationForm = ({
   ) => {
     const imageSize = aspectRatioOptions[value as AspectRatioKey];
     setimage((prevState: any) => ({
-        ...prevState,
-        aspectRatio: imageSize.aspectRatio,
-        width: imageSize.width,
-        height: imageSize.height, 
-    }))
+      ...prevState,
+      aspectRatio: imageSize.aspectRatio,
+      width: imageSize.width,
+      height: imageSize.height,
+    }));
 
     setnewTransformation(transformationType.config);
 
@@ -100,39 +101,38 @@ const TransformationForm = ({
     onChangeField: (value: string) => void
   ) => {
     debounce(() => {
-        setnewTransformation((prevState: any) => ({
-            ...prevState,
-            [type]: {
-                ...prevState?.[type],
-                [fieldName === "prompt" ? "prompt" : "to"]: value,
-            }
-        }))
+      setnewTransformation((prevState: any) => ({
+        ...prevState,
+        [type]: {
+          ...prevState?.[type],
+          [fieldName === "prompt" ? "prompt" : "to"]: value,
+        },
+      }));
 
-        return onChangeField(value);
-    }, 1000)
+      return onChangeField(value);
+    }, 1000);
   };
 
-  const OnTransformHandler = async() => {
+  const OnTransformHandler = async () => {
     setIsTransforming(true);
 
     setTransformationConfig(
-        deepMergeObjects(newTransformation,
-            transformationConfig)
-    )
+      deepMergeObjects(newTransformation, transformationConfig)
+    );
 
     setnewTransformation(null);
 
     startTransition(async () => {
-        await updateCredits(userId, creditFee)
-    })
-  }
+      await updateCredits(userId, creditFee);
+    });
+  };
 
   useEffect(() => {
-    if(image && (type === 'restore' || type === "removeBackground")) {
-        setnewTransformation(transformationType.config);
+    if (image && (type === "restore" || type === "removeBackground")) {
+      setnewTransformation(transformationType.config);
     }
-  }, [image, transformationType.config, type])
-  
+  }, [image, transformationType.config, type]);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -220,13 +220,31 @@ const TransformationForm = ({
             )}
           </div>
         )}
+
+        <div className="media-uploader-field">
+          <CustomField
+            control={form.control}
+            name="publicId"
+            className="flex size-full flex-col"
+            render={({ field }) => (
+              <MediaUploader
+                onValueChange={field.onChange}
+                setImage={setimage}
+                publicId={field.value}
+                image={image}
+                type={type}
+              />
+            )}
+          />
+        </div>
+
         <div className="flex flex-col  gap-4">
           <Button
             type="submit"
             className="submit-button capitalize"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Submitting..." : "Save Image" }
+            {isSubmitting ? "Submitting..." : "Save Image"}
           </Button>
           <Button
             type="button"
